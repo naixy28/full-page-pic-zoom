@@ -8,6 +8,10 @@
 
         const wait = duration => new Promise(res => { setTimeout( res, duration ) });
 
+        function scrollHandler (e) {
+            
+        }
+
         function getObj () {
             if (!currImg) {
                 currImg = new Image();
@@ -15,6 +19,8 @@
                 shadow = document.createElement('div');
                 shadow.classList.add('fp-shadow', 'hidden');
                 shadow.appendChild(currImg);
+
+                shadow.onscroll = scrollHandler;
 
                 shadow.onclick = function () {
                     zoomOut();
