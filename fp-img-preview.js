@@ -8,9 +8,7 @@
 
         const wait = duration => new Promise(res => { setTimeout( res, duration ) });
 
-        function scrollHandler (e) {
-            
-        }
+        function scrollHandler (e) {}
 
         function getObj () {
             if (!currImg) {
@@ -37,8 +35,10 @@
         function setInitAttrs (src, pos) {
             currImg.src = src;
             currPos = pos;
-            currImg.removeAttribute('style');
-            currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top}px, 0 ); `);
+
+            let scale = currPos.width / currImg.width ;
+            
+            currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top}px, 0 ) scale(${scale}); `);
 
             shadow.classList.remove('hidden');
 
@@ -47,7 +47,9 @@
         }
 
         function zoomOut () {
-            let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top}px, 0 ); `); }
+            let scale = currPos.width / currImg.width ;            
+            // debugger
+            const transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top}px, 0 ) scale(${scale}); `); }
             currImg.classList.remove('active')
         
             new Promise(res => {
@@ -61,43 +63,45 @@
             })
         }
 
+        function zoomIn() {
+            let screenW = window.innerWidth || 1,
+                screenH = window.innerHeight || 1,
+                imgOriginW = currImg.width || 0,
+                imgOriginH = currImg.height || 0,
+                paddingTop = (imgOriginH + 40) >= screenH ? 20 : (screenH - imgOriginH) / 2,
+                scale = 1,
+                x,
+                y;
+
+            x = (screenW - imgOriginW) / 2 >= 0 ? (screenW - imgOriginW) / 2 : 20;
+            y = paddingTop;
+
+            // emit transition, tried Promise but seems only setTimeout works
+            let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${x}px, ${y}px, 0 ) scale(${scale}); `); }
+            setTimeout(transFunc, 0);
+
+            // set class
+            currImg.classList.add('active')
+
+            return this;
+        }
+
         return {
             init (src, pos) {
                 const currImg = getObj();
                 setInitAttrs(src, pos);
                 document.body.appendChild(shadow);
 
+                zoomIn()
                 return this;
             },
-
-            zoomIn () {
-                let screenW = window.innerWidth || 0,
-                    paddingTop = 20,
-                    xProportion = .85,
-                    scale,
-                    x,
-                    y;
-
-                // calculate transform vals
-                scale =  screenW * xProportion / currPos.width;
-                x = (screenW  * ( 1 - xProportion) / 2 );
-                y = paddingTop;
-                let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${x}px, ${y}px, 0 ) scale(${scale}); `); }
-
-                // do transition, tried Promise but seems only setTimeout works
-                setTimeout( transFunc, 0); 
-                
-                // set class
-                currImg.classList.add('active')
-                
-                return this;
-            }
         }
     })()
 
     const imgs = document.querySelectorAll('img');
 
     imgs.forEach(function (img) {
+        img.classList.add('fp-zoom-in')
         img.addEventListener('click', function () {
             const src = this.src,
                 rect = this.getBoundingClientRect(),
@@ -107,8 +111,7 @@
                     width: rect.width,
                     height: rect.height
                 }
-
-            FP.init(src, pos).zoomIn();
+            FP.init(src, pos);
         })
     })
 
