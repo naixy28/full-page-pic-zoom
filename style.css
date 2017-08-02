@@ -14,11 +14,20 @@ main {
     z-index: 1024;
 }
 
+.fp-shadow.hidden{
+    display: none;
+}
+
 .fp-curr-img{
     position: absolute;
     left: 0;
     top: 0;
-    transition: transform .3s ease-in;
+    transform-origin: left top;
+    transition: all .3s ease-in;
+}
+
+.fp-curr-img.active {
+    cursor: zoom-out;
 }
 
 
