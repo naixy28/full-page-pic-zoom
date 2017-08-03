@@ -2,21 +2,40 @@
     
     const FP = (function(){
         let currImg = null,
+            wrapper = null,
             shadow = null,
             currPos = {},
             transitionDuration = 300;
 
         const wait = duration => new Promise(res => { setTimeout( res, duration ) });
 
-        function scrollHandler (e) {}
+        const scrollHandler = (function () {
+            let previousTop = 0,
+                currentTop;
+            return function (e) {
+                currentTop = this.scrollTop;
+
+                // if scroll to edge
+                if ( currentTop <= 0 || currentTop + this.clientHeight >= this.scrollHeight) {
+                    zoomOut();
+                }
+
+                previousTop = currentTop;
+            }
+        })()
 
         function getObj () {
             if (!currImg) {
                 currImg = new Image();
                 currImg.classList.add('fp-curr-img');
+
+                wrapper = document.createElement('div');
+                wrapper.classList.add('fp-wrapper');
+                wrapper.appendChild(currImg);
+
                 shadow = document.createElement('div');
                 shadow.classList.add('fp-shadow', 'hidden');
-                shadow.appendChild(currImg);
+                shadow.appendChild(wrapper);
 
                 shadow.onscroll = scrollHandler;
 
@@ -54,12 +73,12 @@
         
             new Promise(res => {
                 setTimeout(transFunc, 0)
+                document.body.removeAttribute('style');
                 res();
             })
             .then(() => wait(transitionDuration))
             .then(() => {
                 shadow.classList.add('hidden');
-                document.body.removeAttribute('style');
             })
         }
 
@@ -69,16 +88,23 @@
                 imgOriginW = currImg.width || 0,
                 imgOriginH = currImg.height || 0,
                 paddingTop = (imgOriginH + 40) >= screenH ? 20 : (screenH - imgOriginH) / 2,
+                scrollHeight = 40,
                 scale = 1,
                 x,
                 y;
 
-            x = (screenW - imgOriginW) / 2 >= 0 ? (screenW - imgOriginW) / 2 : 20;
+            x = (screenW - imgOriginW) / 2 >= 0 ? (screenW - imgOriginW) / 2 : 40;
             y = paddingTop;
 
             // emit transition, tried Promise but seems only setTimeout works
-            let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${x}px, ${y}px, 0 ) scale(${scale}); `); }
+            let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${x}px, ${y + scrollHeight}px, 0 ) scale(${scale}); `); }
             setTimeout(transFunc, 0);
+
+            // transform wrapper
+            wrapper.setAttribute('style', `height: ${imgOriginH + paddingTop * 2 + scrollHeight * 2}px; `)
+
+            // make scroll space;
+            shadow.scrollTop = scrollHeight;
 
             // set class
             currImg.classList.add('active')

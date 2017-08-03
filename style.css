@@ -29,6 +29,13 @@ main {
     display: none;
 }
 
+.fp-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: left top;
+}
+
 .fp-curr-img{
     position: absolute;
     left: 0;
