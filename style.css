@@ -48,7 +48,8 @@ main {
     cursor: zoom-out;
 }
 
-.fp-zoom-in {
+.fp-zoom-in,
+img[data-fp-img=true] {
     cursor: zoom-in;
 }
 

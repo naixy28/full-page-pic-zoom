@@ -130,22 +130,29 @@
         }
     })()
 
-    const useFullPageImgPreview = function () {
-        const imgs = document.querySelectorAll('img[data-fp-img=true]');
+    const defaultOpt = {
+        // selector: 'img[data-fp-img=true]',
+    }
 
-        imgs.forEach(function (img) {
-            img.classList.add('fp-zoom-in')
-            img.addEventListener('click', function () {
-                const src = this.src,
-                    rect = this.getBoundingClientRect(),
-                    pos = {
-                        top: rect.top,
-                        left: rect.left,
-                        width: rect.width,
-                        height: rect.height
-                    }
-                src && FP.init(src, pos);
-            })
+    const clickHandler = function () {
+        const src = this.src,
+            rect = this.getBoundingClientRect(),
+            pos = {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height
+            }
+        src && FP.init(src, pos);
+    }
+
+    const useFullPageImgPreview = function (opts) {
+        const o = Object.assign({}, defaultOpt, opts)
+
+        document.addEventListener('click', function (e) {
+            if ( e.target.nodeName === 'IMG' && e.target.dataset['fpImg'] ) {
+                clickHandler.call(e.target);
+            }
         })
     }
 
@@ -169,4 +176,6 @@
 
 }).call(this)
 
-window.useFullPageImgPreview();
+window.useFullPageImgPreview({
+    // selector: '[data-fp-img=true]',
+});
