@@ -1,0 +1,25 @@
+{
+  "name": "full-page-img-preview",
+  "version": "1.0.0",
+  "description": "A simple tool allows uses to preview images on your web pages",
+  "main": " ",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naixy28/full-page-pic-zoom.git"
+  },
+  "keywords": [
+    "css",
+    "http",
+    "promise",
+    "es6"
+  ],
+  "author": "Ryan Yuan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/naixy28/full-page-pic-zoom/issues"
+  },
+  "homepage": "https://github.com/naixy28/full-page-pic-zoom#readme"
+}
