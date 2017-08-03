@@ -5,7 +5,10 @@
             wrapper = null,
             shadow = null,
             currPos = {},
-            transitionDuration = 300;
+            transitionDuration = 300,
+            scrollSpaceHeight = 40,
+            xMinPadding = 30;
+            yMinPadding = 20;
 
         const wait = duration => new Promise(res => { setTimeout( res, duration ) });
 
@@ -43,9 +46,7 @@
                     zoomOut();
                 } 
 
-                currImg.onload = function () {
-                    // TODO what?
-                }
+                currImg.onload = function () {}
             }
 
             return currImg;
@@ -57,18 +58,20 @@
 
             let scale = currPos.width / currImg.width ;
             
-            currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top}px, 0 ) scale(${scale}); `);
+            currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top + scrollSpaceHeight}px, 0 ) scale(${scale}); `);
 
             shadow.classList.remove('hidden');
 
-            // body overflow hidden
-            document.body.setAttribute('style', 'overflow: hidden;');
+            // body overflow hidden, seems better not to hide
+            // document.body.setAttribute('style', 'overflow: hidden;');
         }
 
         function zoomOut () {
-            let scale = currPos.width / currImg.width ;            
+            let scale = currPos.width / currImg.width,
+                topOffset = shadow.scrollTop;
+
             // debugger
-            const transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top}px, 0 ) scale(${scale}); `); }
+            const transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top + topOffset}px, 0 ) scale(${scale}); `); }
             currImg.classList.remove('active')
         
             new Promise(res => {
@@ -87,24 +90,25 @@
                 screenH = window.innerHeight || 1,
                 imgOriginW = currImg.width || 0,
                 imgOriginH = currImg.height || 0,
-                paddingTop = (imgOriginH + 40) >= screenH ? 20 : (screenH - imgOriginH) / 2,
-                scrollHeight = 40,
+                paddingTop = (imgOriginH + 2 * yMinPadding) >= screenH ? yMinPadding : (screenH - imgOriginH) / 2,
                 scale = 1,
                 x,
                 y;
 
-            x = (screenW - imgOriginW) / 2 >= 0 ? (screenW - imgOriginW) / 2 : 40;
-            y = paddingTop;
+            // calculate position
+            x = (screenW - imgOriginW) >= 0 ? (screenW - imgOriginW) / 2 : xMinPadding;
+            y = paddingTop + scrollSpaceHeight;
+            scale = (screenW - imgOriginW - xMinPadding * 2) >= 0 ? 1 : (screenW - xMinPadding * 2) / imgOriginW;
 
-            // emit transition, tried Promise but seems only setTimeout works
-            let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${x}px, ${y + scrollHeight}px, 0 ) scale(${scale}); `); }
+            // emit transition
+            let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${x}px, ${y}px, 0 ) scale(${scale}); `); }
             setTimeout(transFunc, 0);
 
-            // transform wrapper
-            wrapper.setAttribute('style', `height: ${imgOriginH + paddingTop * 2 + scrollHeight * 2}px; `)
+            // set wrapper height
+            wrapper.setAttribute('style', `height: ${imgOriginH * scale + paddingTop * 2 + scrollSpaceHeight * 2}px; `)
 
             // make scroll space;
-            shadow.scrollTop = scrollHeight;
+            shadow.scrollTop = scrollSpaceHeight;
 
             // set class
             currImg.classList.add('active')
@@ -121,24 +125,48 @@
                 zoomIn()
                 return this;
             },
+            zoomIn,
+            zoomOut
         }
     })()
 
-    const imgs = document.querySelectorAll('img');
+    const useFullPageImgPreview = function () {
+        const imgs = document.querySelectorAll('img[data-fp-img=true]');
 
-    imgs.forEach(function (img) {
-        img.classList.add('fp-zoom-in')
-        img.addEventListener('click', function () {
-            const src = this.src,
-                rect = this.getBoundingClientRect(),
-                pos = {
-                    top: rect.top,
-                    left: rect.left,
-                    width: rect.width,
-                    height: rect.height
-                }
-            FP.init(src, pos);
+        imgs.forEach(function (img) {
+            img.classList.add('fp-zoom-in')
+            img.addEventListener('click', function () {
+                const src = this.src,
+                    rect = this.getBoundingClientRect(),
+                    pos = {
+                        top: rect.top,
+                        left: rect.left,
+                        width: rect.width,
+                        height: rect.height
+                    }
+                src && FP.init(src, pos);
+            })
         })
-    })
+    }
 
-})()
+    const root = this;
+    
+    if (typeof exports !== 'undefined') {
+        // CMD
+        if (module && module.exports) {
+            exports = module.exports = useFullPageImgPreview;
+        }
+        exports.useFullPageImgPreview = useFullPageImgPreview;
+        console.log('FP could only be used in front end, dont use it in Node env :)');
+    } else if (typeof define === 'function' && define.amd){
+        // AMD
+        define( 'FullPageImgPreview', function () {
+            return useFullPageImgPreview;
+        })
+    } else {
+        root['useFullPageImgPreview'] = useFullPageImgPreview;
+    }
+
+}).call(this)
+
+window.useFullPageImgPreview();
