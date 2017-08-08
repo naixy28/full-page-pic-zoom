@@ -4,7 +4,8 @@
   "description": "A simple tool allows uses to preview images on your web pages",
   "main": " ",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "uglifyjs ./lib/fp-img-preview.js -m -o ./lib/fp-img-preview.min.js"
   },
   "repository": {
     "type": "git",
