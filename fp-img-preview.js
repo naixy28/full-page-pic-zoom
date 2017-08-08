@@ -40,6 +40,8 @@
                 shadow.classList.add('fp-shadow', 'hidden');
                 shadow.appendChild(wrapper);
 
+                document.body.appendChild(shadow);                
+
                 shadow.onscroll = scrollHandler;
 
                 shadow.onclick = function () {
@@ -58,30 +60,31 @@
 
             let scale = currPos.width / currImg.width ;
             
-            currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top + scrollSpaceHeight}px, 0 ) scale(${scale}); `);
+            wrapper.style.height = '0';
+            currImg.style.transform = `translate3d( ${currPos.left}px, ${currPos.top + scrollSpaceHeight}px, 0 ) scale(${scale})`;
 
             shadow.classList.remove('hidden');
 
             // body overflow hidden, seems better not to hide
-            // document.body.setAttribute('style', 'overflow: hidden;');
+            document.body.style.overflow = 'hidden';
         }
 
         function zoomOut () {
             let scale = currPos.width / currImg.width,
                 topOffset = shadow.scrollTop;
 
-            // debugger
-            const transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${currPos.left}px, ${currPos.top + topOffset}px, 0 ) scale(${scale}); `); }
+            const transFunc = () => { currImg.style.transform = `translate3d( ${currPos.left}px, ${currPos.top + topOffset}px, 0 ) scale(${scale})`; }
             currImg.classList.remove('active')
         
             new Promise(res => {
                 setTimeout(transFunc, 0)
-                document.body.removeAttribute('style');
                 res();
             })
             .then(() => wait(transitionDuration))
             .then(() => {
                 shadow.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                
             })
         }
 
@@ -90,25 +93,24 @@
                 screenH = window.innerHeight || 1,
                 imgOriginW = currImg.width || 0,
                 imgOriginH = currImg.height || 0,
-                paddingTop = (imgOriginH + 2 * yMinPadding) >= screenH ? yMinPadding : (screenH - imgOriginH) / 2,
-                scale = 1,
+                scale = (screenW - imgOriginW - xMinPadding * 2) >= 0 ? 1 : (screenW - xMinPadding * 2) / imgOriginW,
+                paddingTop = (imgOriginH * scale + 2 * yMinPadding) >= screenH ? yMinPadding : (screenH - imgOriginH * scale) / 2,
                 x,
                 y;
 
             // calculate position
             x = (screenW - imgOriginW) >= 0 ? (screenW - imgOriginW) / 2 : xMinPadding;
             y = paddingTop + scrollSpaceHeight;
-            scale = (screenW - imgOriginW - xMinPadding * 2) >= 0 ? 1 : (screenW - xMinPadding * 2) / imgOriginW;
-
-            // emit transition
-            let transFunc = () => { currImg.setAttribute('style', `transform: translate3d( ${x}px, ${y}px, 0 ) scale(${scale}); `); }
-            setTimeout(transFunc, 0);
 
             // set wrapper height
-            wrapper.setAttribute('style', `height: ${imgOriginH * scale + paddingTop * 2 + scrollSpaceHeight * 2}px; `)
+            wrapper.style.height = `${imgOriginH * scale + paddingTop * 2 + scrollSpaceHeight * 2}px`;
 
             // make scroll space;
             shadow.scrollTop = scrollSpaceHeight;
+
+            // emit transition
+            let transFunc = () => { currImg.style.transform = `translate3d( ${x}px, ${y}px, 0 ) scale(${scale})`; }
+            setTimeout(transFunc, 0);
 
             // set class
             currImg.classList.add('active')
@@ -120,7 +122,6 @@
             init (src, pos) {
                 const currImg = getObj();
                 setInitAttrs(src, pos);
-                document.body.appendChild(shadow);
 
                 zoomIn()
                 return this;
@@ -130,22 +131,30 @@
         }
     })()
 
-    const useFullPageImgPreview = function () {
-        const imgs = document.querySelectorAll('img[data-fp-img=true]');
+    const defaultOpt = {
+        // selector: 'img[data-fp-img=true]',
+    }
 
-        imgs.forEach(function (img) {
-            img.classList.add('fp-zoom-in')
-            img.addEventListener('click', function () {
-                const src = this.src,
-                    rect = this.getBoundingClientRect(),
-                    pos = {
-                        top: rect.top,
-                        left: rect.left,
-                        width: rect.width,
-                        height: rect.height
-                    }
-                src && FP.init(src, pos);
-            })
+    const clickHandler = function () {
+        if (!this.complete) return;
+        const src = this.src,
+            rect = this.getBoundingClientRect(),
+            pos = {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height
+            }
+        src && FP.init(src, pos);
+    }
+
+    const useFullPageImgPreview = function (opts = {}) {
+        const o = Object.assign({}, defaultOpt, opts)
+
+        document.addEventListener('click', function (e) {
+            if ( e.target.nodeName === 'IMG' && e.target.dataset['fpImg'] ) {
+                clickHandler.call(e.target);
+            }
         })
     }
 
@@ -168,5 +177,3 @@
     }
 
 }).call(this)
-
-window.useFullPageImgPreview();
